@@ -12,9 +12,12 @@ Reference impl via darknet cfg files at https://github.com/WongKinYiu/CrossStage
 
 Hacked together by / Copyright 2020 Ross Wightman
 """
+!pip install antialiased-cnns
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import antialiased_cnns
 
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from .helpers import build_model_with_cfg
@@ -148,7 +151,8 @@ def create_stem(
             stem.add_module('pool', nn.MaxPool2d(kernel_size=3, stride=1, padding=1))
             stem.add_module('aa', aa_layer(channels=in_c, stride=2))
         else:
-            stem.add_module('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+            stem.add_module('pool', [nn.MaxPool2d(kernel_size=3, stride=1), antialiased_cnns.BlurPool(in_c, stride=2)])
+            '''nn.MaxPool2d(kernel_size=3, stride=2, padding=1)'''
     return stem, dict(num_chs=in_c, reduction=stride, module='.'.join(['stem', last_conv]))
 
 
